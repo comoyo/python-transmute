@@ -21,6 +21,6 @@ project_metadata = {
                         "Topic :: System :: Installation/Setup",
                         "Topic :: System :: Software Distribution",
                     ],
-    'packages':     find_packages(),
+    'packages':     find_packages(exclude=[ 'tests*' ]),
 }
 setup(**project_metadata)

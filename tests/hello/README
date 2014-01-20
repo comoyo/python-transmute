@@ -1,0 +1,13 @@
+hello
+=====
+
+This module can be used to test out the transmute module:
+
+```
+    $ python setup.py bdist_egg > /dev/null
+    $ PYTHONPATH=../../ python hello-world.py
+    Hi, World!! -- from version 0 of hello
+    $ HELLO_VERSION=2.1 python setup.py bdist_egg > /dev/null
+    $ PYTHONPATH=../../ python hello-world.py
+    Hi, World!! -- from version 2.1 of hello
+```

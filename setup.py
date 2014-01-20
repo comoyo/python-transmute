@@ -17,7 +17,7 @@ project_metadata = {
                         "Operating System :: OS Independent",
                         "Development Status :: 3 - Alpha",
                         "Intended Audience :: Developers",
-                        "Topic :: Software Development :: Libraries :: Python Modules"
+                        "Topic :: Software Development :: Libraries :: Python Modules",
                         "Topic :: System :: Installation/Setup",
                         "Topic :: System :: Software Distribution",
                     ],

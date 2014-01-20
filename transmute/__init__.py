@@ -16,11 +16,15 @@ import os
 import pkg_resources
 import sys
 import transmute.basket
+import warnings
+import zipimport
 
 class Transmuter:
 
     _fallback_ws = pkg_resources.WorkingSet([]) # Empty set
     _fallback_env = pkg_resources.Environment() # Provides packages in sys.path
+
+    _path_entries = []
 
     def __init__(self, requirements=None, sources=None):
         self.reset()
@@ -99,24 +103,47 @@ class Transmuter:
         for dist in self._working_set:
             if hasattr(dist, '_transmute_egg'):
                 basket = self._get_basket(dist.location)
-                basket.fetch(dist._transmute_egg)
-                should_reload = True
+                filename = basket.fetch(dist._transmute_egg)
+                metadata = pkg_resources.EggMetadata(zipimport.zipimporter(filename))
+                dist._provider = metadata
+                try:
+                    with warnings.catch_warnings():
+                        warnings.simplefilter('error')
+                        dist.check_version_conflict()
+                except UserWarning as err:
+                    if ' was already imported ' not in err.message:
+                        raise
+                    should_reload = True
 
         # TODO: recover from bad updates
         if should_reload:
             self._reload()
             assert False
 
+        self._load()
+        self.reset()
+
     def _append_entries(self, entries):
         for entry in entries:
             if entry not in self._working_set.entries:
                 self._working_set.add_entry(entry)
+
+    def _load(self):
+        for dist in self._working_set:
+            dist.activate()
+
+        self._path_entries.extend(self._working_set.entries)
+        self._append_entries(sys.path)
+        sys.path[:] = self._working_set.entries
+
+        reload(pkg_resources)
 
     def _reload(self):
         executable = sys.executable
         arguments = [ sys.executable ] + sys.argv
         environment = os.environ
 
+        self._append_entries(self._path_entries)
         if 'PYTHONPATH' in environment:
             self._append_entries(environment['PYTHONPATH'].split(os.pathsep))
         environment['PYTHONPATH'] = os.pathsep.join(self._working_set.entries)

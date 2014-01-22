@@ -81,7 +81,11 @@ def bootstrap_transmute():
         import json, urllib2
 
         url = '%s/%s/json' % (pypi_url, package_name)
-        metadata = json.load(urllib2.urlopen(url))
+        req = urllib2.urlopen(url)
+        try:
+            metadata = json.load(req)
+        finally:
+            req.close()
 
         for info in metadata['urls']:
             if sys.version.startswith(info['python_version']) \

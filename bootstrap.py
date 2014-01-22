@@ -20,7 +20,7 @@
 # packages from transmute and launch the application.
 #
 # transmute packages are queried/fetched from PyPI and imported prior to calling
-# main(). Return values from main() are fed to sys.exit(). 
+# main(). Return values from main() are passed along to sys.exit().
 
 def main():
     ### Your code here?

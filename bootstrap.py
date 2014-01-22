@@ -76,7 +76,6 @@ def bootstrap_transmute():
         finally:
             if src: src.close()
             if dst: dst.close()
-            if dst: dst.close()
 
     def get_package_info(package_name):
         import json, urllib2

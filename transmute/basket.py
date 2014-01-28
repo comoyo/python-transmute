@@ -12,9 +12,8 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import os
-import os.path
 import re
+from transmute.bootstrap import Basket
 
 _basket_factory = {}
 _basket = {}
@@ -27,28 +26,6 @@ def register_basket_factory(scheme, factory):
 def register_basket(url, basket):
     _basket[url] = basket
 
-_EGG_REGEX = re.compile("\.egg$", re.IGNORECASE)
-def _is_egg(filename):
-    return _EGG_REGEX.search(filename)
-
-class Basket:
-    def __init__(self, path=None, eggs=None):
-        self.path = path
-        self.eggs = set()
-
-        if eggs:
-            self.add(eggs)
-
-    def add(self, eggs):
-        self.eggs |= set(filter(_is_egg, eggs))
-
-    def get_local_path(self, egg):
-        assert egg in self.eggs
-        return os.path.join(self.path, egg)
-
-    def fetch(self, egg):
-        return self.get_local_path(egg)
-
 def _get_basket(url):
     scheme, colon, _ = url.partition(':')
     if colon \
@@ -56,10 +33,9 @@ def _get_basket(url):
         return _basket_factory[scheme](url)
 
     # Assume url is a local path
-    return Basket(url, os.listdir(url))
+    return Basket(path=url)
 
 def get_basket(url):
     if url not in _basket:
-        try: _basket[url] = _get_basket(url)
-        except: pass
-    return _basket.get(url, Basket())
+        _basket[url] = _get_basket(url)
+    return _basket[url]

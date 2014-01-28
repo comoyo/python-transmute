@@ -139,13 +139,14 @@ def require(baskets, *requirements):
 
     requirements = list(pkg_resources.parse_requirements(requirements))
 
-    environment = pkg_resources.Environment([])
+    environment = pkg_resources.Environment()
     for basket in baskets:
         basket.fill_environment(environment, requirements)
 
     working_set = pkg_resources.WorkingSet([])
     for dist in working_set.resolve(requirements, env=environment):
-        dist._transmute_basket.make_local(dist)
+        if hasattr(dist, '_transmute_basket'):
+            dist._transmute_basket.make_local(dist)
         working_set.add(dist)
 
     for entry in sys.path:
@@ -185,11 +186,14 @@ class Basket(object):
                 and filename[-3:].lower() == 'egg'
 
     def get_distribution(self, egg, **metadata):
-        from pkg_resources import Distribution
+        from pkg_resources import Distribution, EGG_DIST
 
         dist = Distribution.from_location(self.path + egg, egg)
         dist._transmute_basket = self
         dist._transmute_metadata = metadata
+
+        # Prefer local packages.
+        dist.precedence = EGG_DIST - 0.1
 
         return dist
 

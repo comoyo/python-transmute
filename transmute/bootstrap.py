@@ -145,7 +145,7 @@ def reset_system_path(working_set):
     # pkg_resource's global working_set may be outdated
         reload(sys.modules['pkg_resources'])
 
-def require(baskets, *requirements):
+def require(working_set, baskets, *requirements):
     """Satisfy requirements from given baskets."""
 
     import pkg_resources
@@ -156,13 +156,10 @@ def require(baskets, *requirements):
     for basket in baskets:
         basket.fill_environment(environment, requirements)
 
-    working_set = pkg_resources.WorkingSet([])
     for dist in working_set.resolve(requirements, env=environment):
         if hasattr(dist, '_transmute_basket'):
             dist._transmute_basket.make_local(dist)
         working_set.add(dist)
-
-    reset_system_path(working_set)
 
 
 class Basket(object):
@@ -279,19 +276,22 @@ def bootstrap():
     sys.path.
     """
     bootstrap_starting()
+
+    import pkg_resources
+    working_set = pkg_resources.WorkingSet([])
+
     try: # Fetch latest packages from PyPI
-        require([ PYPI_BASKET ], requirements)
-        bootstrap_succeeded()
-        return
-    except: pass
+        require(working_set, [ PYPI_BASKET ], *requirements)
+    except:
+        try: # Use previously downloaded packages, if download fails
+            require(working_set, [ Basket(url=PyPIBasket._pypi_url) ],
+                    *requirements)
+        except:
+            bootstrap_failed()
+            return
 
-    try: # Use previously downloaded packages, if download fails
-        require([ Basket(url=PyPIBasket._pypi_url) ], requirements)
-        bootstrap_succeeded()
-        return
-    except: pass
-
-    bootstrap_failed()
+    reset_system_path(working_set)
+    bootstrap_succeeded()
 
 def _clean_namespace():
     """Clean module's namespace.

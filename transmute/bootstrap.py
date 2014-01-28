@@ -266,6 +266,8 @@ class PyPIBasket(Basket):
             try: self._add_packages(req.project_name, environment)
             except: raise
 
+PYPI_BASKET = PyPIBasket()
+
 
 def bootstrap():
     """Bootstrap 'transmute' package, making it available for import.
@@ -278,7 +280,7 @@ def bootstrap():
     """
     bootstrap_starting()
     try: # Fetch latest packages from PyPI
-        require([ PyPIBasket() ], requirements)
+        require([ PYPI_BASKET ], requirements)
         bootstrap_succeeded()
         return
     except: pass
@@ -316,11 +318,12 @@ def _clean_namespace():
     del _copy
     del _download
 
-    global reset_system_path, require, Basket, PyPIBasket
+    global reset_system_path, require, Basket, PyPIBasket, PYPI_BASKET
     del reset_system_path
     del require
     del Basket
     del PyPIBasket
+    del PYPI_BASKET
 
     global bootstrap, _clean_namespace
     del bootstrap

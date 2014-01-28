@@ -132,6 +132,19 @@ def _download(url, filename, md5sum):
 
         os.rename(dst.name, filename)
 
+def reset_system_path(working_set):
+    """Prepend entries in working_set to sys.path."""
+
+    for entry in sys.path:
+        if entry not in working_set.entries:
+            working_set.add_entry(entry)
+
+    sys.path[:] = working_set.entries
+
+    if 'pkg_resources' in sys.modules:
+    # pkg_resource's global working_set may be outdated
+        reload(sys.modules['pkg_resources'])
+
 def require(baskets, *requirements):
     """Satisfy requirements from given baskets."""
 
@@ -149,11 +162,7 @@ def require(baskets, *requirements):
             dist._transmute_basket.make_local(dist)
         working_set.add(dist)
 
-    for entry in sys.path:
-        if entry not in working_set.entries:
-            working_set.add_entry(entry)
-
-    sys.path[:] = working_set.entries
+    reset_system_path(working_set)
 
 
 class Basket(object):
@@ -307,7 +316,8 @@ def _clean_namespace():
     del _copy
     del _download
 
-    global require, Basket, PyPIBasket
+    global reset_system_path, require, Basket, PyPIBasket
+    del reset_system_path
     del require
     del Basket
     del PyPIBasket

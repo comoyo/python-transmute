@@ -24,6 +24,9 @@ def register_basket_factory(scheme, factory):
     assert _SCHEME_REGEX.match(scheme)
     _basket_factory[scheme] = factory
 
+def register_basket(url, basket):
+    _basket[url] = basket
+
 _EGG_REGEX = re.compile("\.egg$", re.IGNORECASE)
 def _is_egg(filename):
     return _EGG_REGEX.search(filename)

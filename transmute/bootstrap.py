@@ -149,6 +149,7 @@ def require(working_set, baskets, *requirements):
     """Satisfy requirements from given baskets."""
 
     import pkg_resources
+    import zipimport
 
     requirements = list(pkg_resources.parse_requirements(requirements))
 
@@ -159,6 +160,8 @@ def require(working_set, baskets, *requirements):
     for dist in working_set.resolve(requirements, env=environment):
         if hasattr(dist, '_transmute_basket'):
             dist._transmute_basket.make_local(dist)
+            dist._provider = pkg_resources.EggMetadata(
+                    zipimport.zipimporter(dist.location))
         working_set.add(dist)
 
 

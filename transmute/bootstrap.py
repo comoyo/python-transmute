@@ -58,6 +58,8 @@ def bootstrap_starting():
 
 def bootstrap_succeeded():
     """Called after (updated) packages have been added to sys.path."""
+    global _bootstrapped_by_transmute
+    _bootstrapped_by_transmute = True
 
 def bootstrap_failed():
     """Called when bootstrap fails to download packages from PyPI or load them

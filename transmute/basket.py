@@ -51,7 +51,7 @@ class Basket:
 
 def _get_basket(url):
     scheme, colon, _ = url.partition(':')
-    if colon == ':' \
+    if colon \
             and scheme in _basket_factory:
         return _basket_factory[scheme](url)
 

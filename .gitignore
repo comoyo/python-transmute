@@ -51,3 +51,5 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# Project-specific
+transmute/_version.py

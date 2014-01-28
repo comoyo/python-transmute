@@ -12,6 +12,9 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
+try: from transmute._version import __version__
+except ImportError: __version__ = 'unknown'
+
 import transmute.basket
 from transmute.bootstrap import PYPI_BASKET
 from transmute.resolver import Resolver

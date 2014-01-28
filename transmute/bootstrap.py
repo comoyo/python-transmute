@@ -227,11 +227,11 @@ class Basket(object):
 class PyPIBasket(Basket):
     """A proxy basket for eggs available in PyPI."""
 
-    _pypi_url = 'https://pypi.python.org/pypi'
+    pypi_url = 'https://pypi.python.org/pypi'
     _distributions = {}
 
     def __init__(self):
-        super(PyPIBasket, self).__init__(url=self._pypi_url)
+        super(PyPIBasket, self).__init__(url=self.pypi_url)
 
     def fetch(self, dist, **metadata):
         _download(metadata['url'], dist.location, metadata['md5_digest'])
@@ -242,7 +242,7 @@ class PyPIBasket(Basket):
         import urllib2
 
         if project_name not in self._distributions:
-            url = '%s/%s/json' % (self._pypi_url, project_name)
+            url = '%s/%s/json' % (self.pypi_url, project_name)
             with contextlib.closing(urllib2.urlopen(url)) as req:
                 metadata = json.load(req)
 
@@ -287,7 +287,7 @@ def bootstrap():
         require(working_set, [ PYPI_BASKET ], *requirements)
     except:
         try: # Use previously downloaded packages, if download fails
-            require(working_set, [ Basket(url=PyPIBasket._pypi_url) ],
+            require(working_set, [ Basket(url=PyPIBasket.pypi_url) ],
                     *requirements)
         except:
             bootstrap_failed()

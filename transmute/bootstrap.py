@@ -179,7 +179,15 @@ class Basket(object):
         self.path = os.path.join(path, '') # Keep trailing separator!
         self.distributions = {}
 
-        self.add(*os.listdir(self.path))
+        try:
+            files = os.listdir(self.path)
+        except:
+            # Ignore missing directory unless it's needed to cache remote
+            # packages. A remote basket is unusable without the local cache.
+            if url:
+                raise
+        else:
+            self.add(*files)
 
     def _prepare_cache(self, url):
         import urllib

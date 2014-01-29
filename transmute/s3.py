@@ -83,7 +83,7 @@ class S3Basket(Basket):
         assert self.url.startswith('s3://')
 
         bucket, _, prefix = self.url[5:].partition('/')
-        self.s3_bucket = _S3Bucket(bucket, prefix)
+        self.s3_bucket = _S3Bucket(bucket, prefix + '/')
 
         for filename in self.s3_bucket.list_objects():
             self.add_egg(filename, filename=filename)

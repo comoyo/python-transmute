@@ -189,17 +189,17 @@ class Basket(object):
 
         self.url = url
         self.path = os.path.join(path, '') # Keep trailing separator!
+        self._projects = set()
         self.distributions = {}
 
         try:
-            files = os.listdir(self.path)
+            for filename in os.listdir(self.path):
+                self.add_egg(filename)
         except:
             # Ignore missing directory unless it's needed to cache remote
             # packages. A remote basket is unusable without the local cache.
             if url:
                 raise
-        else:
-            self.add(*files)
 
         try: self.initialize()
         except: pass
@@ -217,7 +217,10 @@ class Basket(object):
         return filename[-4] == '.' \
                 and filename[-3:].lower() == 'egg'
 
-    def get_distribution(self, egg, **metadata):
+    def add_egg(self, egg, **metadata):
+        if not self._is_egg(egg):
+            return
+
         from pkg_resources import Distribution, EGG_DIST
 
         dist = Distribution.from_location(self.path + egg, egg)
@@ -227,17 +230,21 @@ class Basket(object):
         # Prefer local packages.
         dist.precedence = EGG_DIST - 0.1
 
-        return dist
-
-    def add(self, *eggs, **metadata):
-        for egg in eggs:
-            if not self._is_egg(egg):
-                continue
-            self.distributions[egg] = self.get_distribution(egg, **metadata)
+        self.distributions[egg] = dist
 
     def fill_environment(self, environment, requirements=None):
         for dist in self.distributions.itervalues():
             environment.add(dist)
+
+        for req in requirements:
+            project = req.project_name
+            if project in self._projects:
+                continue
+
+            try: self.initialize_project(project)
+            except: continue
+
+            self._projects.add(project)
 
     def make_local(self, dist):
         if os.path.isfile(dist.location):
@@ -258,6 +265,10 @@ class Basket(object):
         """Instance initialization, called once at the end of __init__."""
         pass
 
+    def initialize_project(self, project_name):
+        """Called before fulfilling requirements, once per project_name."""
+        pass
+
     def fetch(self, dist, **metadata):
         """Called from make_local if local copy does not exist."""
         raise RuntimeError('Unable to fetch: %s' % dist)
@@ -267,7 +278,6 @@ class PyPIBasket(Basket):
     """A proxy basket for eggs available in PyPI."""
 
     pypi_url = 'https://pypi.python.org/pypi'
-    _distributions = {}
 
     def fetch(self, dist, **metadata):
         import urllib2
@@ -275,35 +285,21 @@ class PyPIBasket(Basket):
         _download(urllib2.urlopen(metadata['url']),
                 dist.location, metadata['md5_digest'])
 
-    def _add_packages(self, project_name, environment):
+    def initialize_project(self, project_name):
         import contextlib
         import json
         import urllib2
 
-        if project_name not in self._distributions:
-            url = '%s/%s/json' % (self.pypi_url, project_name)
-            with contextlib.closing(urllib2.urlopen(url)) as req:
-                metadata = json.load(req)
+        url = '%s/%s/json' % (self.pypi_url, project_name)
+        with contextlib.closing(urllib2.urlopen(url)) as req:
+            metadata = json.load(req)
 
-            distributions = []
-            for package in metadata['urls']:
-                if not sys.version.startswith(package['python_version']) \
-                        or package['packagetype'] != 'bdist_egg':
-                    continue
-                distributions.append(
-                        self.get_distribution(package['filename'], **package))
+        for package in metadata['urls']:
+            if not sys.version.startswith(package['python_version']) \
+                    or package['packagetype'] != 'bdist_egg':
+                continue
+            self.add_egg(package['filename'], **package)
 
-            self._distributions[project_name] = distributions
-
-        for dist in self._distributions[project_name]:
-            environment.add(dist)
-
-    def fill_environment(self, environment, requirements=None):
-        super(PyPIBasket, self).fill_environment(environment, requirements)
-
-        for req in requirements:
-            try: self._add_packages(req.project_name, environment)
-            except: raise
 
 PYPI_BASKET = PyPIBasket(PyPIBasket.pypi_url)
 
@@ -322,18 +318,14 @@ def bootstrap():
     import pkg_resources
     working_set = pkg_resources.WorkingSet([])
 
-    try: # Fetch latest packages from PyPI
+    try:
         require(working_set, [ PYPI_BASKET ], *requirements)
     except:
-        try: # Use previously downloaded packages, if download fails
-            require(working_set, [ Basket(url=PyPIBasket.pypi_url) ],
-                    *requirements)
-        except:
-            bootstrap_failed()
-            return
-
-    reset_system_path(working_set)
-    bootstrap_succeeded()
+        raise
+        bootstrap_failed()
+    else:
+        reset_system_path(working_set)
+        bootstrap_succeeded()
 
 def _clean_namespace():
     """Clean module's namespace.

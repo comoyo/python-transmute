@@ -86,7 +86,7 @@ class S3Basket(Basket):
         self.s3_bucket = _S3Bucket(bucket, prefix)
 
         for filename in self.s3_bucket.list_objects():
-            self.add(filename, filename=filename)
+            self.add_egg(filename, filename=filename)
 
     def fetch(self, dist, **metadata):
         md5sum, data = self.s3_bucket.get_object(metadata['filename'])

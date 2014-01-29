@@ -158,11 +158,21 @@ def require(working_set, baskets, *requirements):
     for basket in baskets:
         basket.fill_environment(environment, requirements)
 
-    for dist in working_set.resolve(requirements, env=environment):
-        if hasattr(dist, '_transmute_basket'):
-            dist._transmute_basket.make_local(dist)
-            dist._provider = pkg_resources.EggMetadata(
-                    zipimport.zipimporter(dist.location))
+    # Download needed distributions
+    while True:
+        needed = working_set.resolve(requirements, env=environment)
+        for dist in needed:
+            if hasattr(dist, '_transmute_basket'):
+                try: dist._transmute_basket.make_local(dist)
+                except: # Drop dist, start over
+                    environment.remove(dist)
+                    break
+                dist._provider = pkg_resources.EggMetadata(
+                        zipimport.zipimporter(dist.location))
+        else:
+            break
+
+    for dist in needed:
         working_set.add(dist)
 
 
@@ -229,8 +239,11 @@ class Basket(object):
         pass
 
     def make_local(self, dist):
-        if not os.path.isfile(dist.location):
-            self.fetch(dist, **dist._transmute_metadata)
+        if os.path.isfile(dist.location):
+            return
+
+        # Called from within catch-all in top-level require()
+        self.fetch(dist, **dist._transmute_metadata)
 
 
 class PyPIBasket(Basket):

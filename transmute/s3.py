@@ -79,11 +79,10 @@ class _S3Bucket:
 
 
 class S3Basket(Basket):
-    def __init__(self, url):
-        assert url.startswith('s3://')
+    def initialize(self):
+        assert self.url.startswith('s3://')
 
-        Basket.__init__(self, url=url)
-        bucket, _, prefix = url[5:].partition('/')
+        bucket, _, prefix = self.url[5:].partition('/')
         self.s3_bucket = _S3Bucket(bucket, prefix)
 
         for filename in self.s3_bucket.list_objects():

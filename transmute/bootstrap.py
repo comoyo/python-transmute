@@ -181,12 +181,13 @@ class Basket(object):
 
     _cache_dir = os.path.expanduser('~/.python-transmute/cache')
 
-    def __init__(self, path=None, url=None):
+    def __init__(self, url=None, path=None):
         assert (path is None) != (url is None)
 
         if path is None:
             path = self._prepare_cache(url)
 
+        self.url = url
         self.path = os.path.join(path, '') # Keep trailing separator!
         self.distributions = {}
 
@@ -199,6 +200,9 @@ class Basket(object):
                 raise
         else:
             self.add(*files)
+
+        try: self.initialize()
+        except: pass
 
     def _prepare_cache(self, url):
         import urllib
@@ -235,9 +239,6 @@ class Basket(object):
         for dist in self.distributions.itervalues():
             environment.add(dist)
 
-    def fetch(self, dist, **metadata):
-        pass
-
     def make_local(self, dist):
         if os.path.isfile(dist.location):
             return
@@ -245,15 +246,28 @@ class Basket(object):
         # Called from within catch-all in top-level require()
         self.fetch(dist, **dist._transmute_metadata)
 
+    # Hooks for implementing custom baskets.
+    #
+    # These functions are called inside catch-all blocks. This is done both for
+    # resilience against transient issues, network or otherwise, and to simplify
+    # implementation of derived classes.
+    #
+    # Derived classes are not required to call the implementations herein.
+
+    def initialize(self):
+        """Instance initialization, called once at the end of __init__."""
+        pass
+
+    def fetch(self, dist, **metadata):
+        """Called from make_local if local copy does not exist."""
+        raise RuntimeError('Unable to fetch: %s' % dist)
+
 
 class PyPIBasket(Basket):
     """A proxy basket for eggs available in PyPI."""
 
     pypi_url = 'https://pypi.python.org/pypi'
     _distributions = {}
-
-    def __init__(self):
-        super(PyPIBasket, self).__init__(url=self.pypi_url)
 
     def fetch(self, dist, **metadata):
         import urllib2
@@ -291,7 +305,7 @@ class PyPIBasket(Basket):
             try: self._add_packages(req.project_name, environment)
             except: raise
 
-PYPI_BASKET = PyPIBasket()
+PYPI_BASKET = PyPIBasket(PyPIBasket.pypi_url)
 
 
 def bootstrap():

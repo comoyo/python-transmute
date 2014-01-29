@@ -105,32 +105,33 @@ def _copy(source, destination, chunk_size):
     for chunk in _chunk_read(source, chunk_size):
         destination.write(chunk)
 
-def _download(url, filename, md5sum):
-    """Download url and save to filename, verify MD5 hash of content.
+def _download(source, filename, md5sum):
+    """Copy source to filename, verify MD5 hash of content.
 
     Content is initially saved to a temporary file and the content's MD5 hash is
-    verified before the file is atomically renamed to its desired filename.
+    verified before the file is atomically renamed to the desired filename.
+
+    This will call source.close().
     """
     import contextlib
     import tempfile
-    import urllib2
 
-    dirname = os.path.dirname(filename)
-    dst = tempfile.NamedTemporaryFile(suffix='.download', dir=dirname)
-    with contextlib.closing(dst):
-        with contextlib.closing(urllib2.urlopen(url)) as src:
-            _copy(src, dst, 4 * 1024)
-        dst.flush()
+    with contextlib.closing(source):
+        dirname = os.path.dirname(filename)
+        dst = tempfile.NamedTemporaryFile(suffix='.download', dir=dirname)
+        with contextlib.closing(dst):
+            _copy(source, dst, 4 * 1024)
+            dst.flush()
 
-        if _md5(dst.name) != md5sum:
-            raise RuntimeError("MD5 hash of local file does not match "
-                    "expected value, upon downloading %s" % url)
+            if _md5(dst.name) != md5sum:
+                raise RuntimeError(
+                        "MD5 hash of local file doesn't match expected value")
 
-        # Depend on non-documented implementation of NamedTemporaryFile, a
-        # shame, but prettier than the alternative
-        dst.delete = False
+            # Depend on non-documented implementation of NamedTemporaryFile, a
+            # shame, but prettier than the alternative
+            dst.delete = False
 
-        os.rename(dst.name, filename)
+            os.rename(dst.name, filename)
 
 def reset_system_path(working_set):
     """Prepend entries in working_set to sys.path."""
@@ -242,7 +243,10 @@ class PyPIBasket(Basket):
         super(PyPIBasket, self).__init__(url=self.pypi_url)
 
     def fetch(self, dist, **metadata):
-        _download(metadata['url'], dist.location, metadata['md5_digest'])
+        import urllib2
+
+        _download(urllib2.urlopen(metadata['url']),
+                dist.location, metadata['md5_digest'])
 
     def _add_packages(self, project_name, environment):
         import contextlib

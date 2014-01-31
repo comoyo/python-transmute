@@ -50,7 +50,7 @@ class Transmuter(object):
 
     def hard_transmute(self):
         self.executable = sys.executable
-        self.arguments = [ executable ] + sys.argv
+        self.arguments = [ self.executable ] + sys.argv
         self.environment = os.environ
 
         # Reset PYTHONPATH

@@ -13,7 +13,6 @@
 #   under the License.
 
 import botocore.session
-import contextlib
 from transmute.basket import Basket, register_basket_factory
 from transmute.bootstrap import _download
 
@@ -90,10 +89,6 @@ class S3Basket(Basket):
 
     def fetch(self, dist, **metadata):
         md5sum, data = self.s3_bucket.get_object(metadata['filename'])
-
-        if not hasattr(data, 'close'):
-            data.close = lambda: None
-
         _download(data, dist.location, md5sum[1:-1])
 
 

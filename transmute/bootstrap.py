@@ -116,22 +116,21 @@ def _download(source, filename, md5sum):
     import contextlib
     import tempfile
 
-    with contextlib.closing(source):
-        dirname = os.path.dirname(filename)
-        dst = tempfile.NamedTemporaryFile(suffix='.download', dir=dirname)
-        with contextlib.closing(dst):
-            _copy(source, dst, 4 * 1024)
-            dst.flush()
+    dirname = os.path.dirname(filename)
+    dst = tempfile.NamedTemporaryFile(suffix='.download', dir=dirname)
+    with contextlib.closing(dst):
+        _copy(source, dst, 4 * 1024)
+        dst.flush()
 
-            if _md5(dst.name) != md5sum:
-                raise RuntimeError(
-                        "MD5 hash of local file doesn't match expected value")
+        if _md5(dst.name) != md5sum:
+            raise RuntimeError(
+                    "MD5 hash of local file doesn't match expected value")
 
-            # Depend on non-documented implementation of NamedTemporaryFile, a
-            # shame, but prettier than the alternative
-            dst.delete = False
+        # Depend on non-documented implementation of NamedTemporaryFile, a
+        # shame, but prettier than the alternative
+        dst.delete = False
 
-            os.rename(dst.name, filename)
+        os.rename(dst.name, filename)
 
 def reset_system_path(working_set):
     """Prepend entries in working_set to sys.path."""
@@ -286,13 +285,12 @@ class PyPIBasket(Basket):
                 dist.location, metadata['md5_digest'])
 
     def initialize_project(self, project_name):
-        import contextlib
         import json
         import urllib2
 
         url = '%s/%s/json' % (self.pypi_url, project_name)
-        with contextlib.closing(urllib2.urlopen(url)) as req:
-            metadata = json.load(req)
+        req = urllib2.urlopen(url)
+        metadata = json.load(req)
 
         for package in metadata['urls']:
             if not sys.version.startswith(package['python_version']) \

@@ -52,4 +52,5 @@ coverage.xml
 docs/_build/
 
 # Project-specific
+README.rst
 transmute/_version.py

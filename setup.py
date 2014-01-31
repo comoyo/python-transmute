@@ -8,11 +8,29 @@ import os.path
 import subprocess
 
 
+README = 'README.md'
 VERSION_FILE = 'transmute/_version.py'
 
+
+# We use README.md for GitHub's sake, generate README.rst for PyPI.
+#
+try:
+    # Requires pandoc, the tool, and pypandoc, the python module
+    import pypandoc
+    long_description = pypandoc.convert(README, 'rst')
+except:
+    raise
+    with open(README) as readme:
+        long_description = readme.read()
+else:
+    with open('README.rst', 'w') as rst:
+        rst.write(long_description)
+
+
+# Generate project version number from git tags
+#
 try: execfile(VERSION_FILE)
 except: __version__ = 'unknown'
-
 
 _git_revision = None
 def get_git_revision():
@@ -61,6 +79,8 @@ class EggInfo(egg_info):
         egg_info.finalize_options(self)
 
 
+# Alright, let's make this setuptools thingie run!
+#
 project_metadata = {
     'name':         'transmute',
     'version':      __version__,
@@ -78,10 +98,12 @@ project_metadata = {
                         "Topic :: System :: Installation/Setup",
                         "Topic :: System :: Software Distribution",
                     ],
+    'long_description': long_description,
     'packages':     find_packages(exclude=[ 'tests*' ]),
     'cmdclass':     {
                         'egg_info': EggInfo,
                         'update_version': UpdateVersion,
                     },
 }
+# Go!
 setup(**project_metadata)

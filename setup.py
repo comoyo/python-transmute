@@ -79,7 +79,6 @@ project_metadata = {
                         "Topic :: System :: Software Distribution",
                     ],
     'packages':     find_packages(exclude=[ 'tests*' ]),
-    'extras_require': { 'S3': 'botocore>=0.31' },
     'cmdclass':     {
                         'egg_info': EggInfo,
                         'update_version': UpdateVersion,

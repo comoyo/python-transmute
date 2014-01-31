@@ -57,7 +57,7 @@ class Transmuter(object):
         self._reset_path()
         os.environ['PYTHONPATH'] = os.pathsep.join(sys.path)
 
-        os.execve(sys.executable, sys.arguments, sys.environment)
+        os.execve(self.executable, self.arguments, self.environment)
         assert False
 
     def transmute(self):

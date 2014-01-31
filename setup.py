@@ -19,7 +19,6 @@ try:
     import pypandoc
     long_description = pypandoc.convert(README, 'rst')
 except:
-    raise
     with open(README) as readme:
         long_description = readme.read()
 else:

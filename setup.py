@@ -39,7 +39,7 @@ def get_git_revision():
     if _git_revision is None:
         wd = os.path.dirname(__file__) or None
         revision = subprocess.check_output(
-                [ 'git', 'describe', '--always', '--dirty' ], cwd=wd)
+                [ 'git', 'describe', '--always', '--dirty=-patched' ], cwd=wd)
         _git_revision = revision.rstrip()
     return _git_revision
 

@@ -191,15 +191,17 @@ class Basket(object):
         self._projects = set()
         self.distributions = {}
 
+        # Add cached packages first...
         try:
             for filename in os.listdir(self.path):
-                self.add_egg(filename)
+                self.add_package(filename)
         except:
             # Ignore missing directory unless it's needed to cache remote
             # packages. A remote basket is unusable without the local cache.
             if url:
                 raise
 
+        # ... then let derived classes fill in remote packages
         try: self.initialize()
         except: pass
 
@@ -216,25 +218,24 @@ class Basket(object):
         return filename[-4] == '.' \
                 and filename[-3:].lower() == 'egg'
 
-    def add_egg(self, egg, **metadata):
-        if not self._is_egg(egg):
+    def add_package(self, filename, **metadata):
+        if not self._is_egg(filename):
             return
 
         from pkg_resources import Distribution, EGG_DIST
 
-        dist = Distribution.from_location(self.path + egg, egg)
+        dist = Distribution.from_location(self.path + filename, filename)
         dist._transmute_basket = self
         dist._transmute_metadata = metadata
 
-        # Prefer local packages.
+        # For any given version, prefer packages already in path
         dist.precedence = EGG_DIST - 0.1
 
-        self.distributions[egg] = dist
+        # Packages added earlier take precedence.
+        project_dists = self.distributions.setdefault(dist.project_name, [])
+        project_dists.append(dist)
 
     def fill_environment(self, environment, requirements=None):
-        for dist in self.distributions.itervalues():
-            environment.add(dist)
-
         for req in requirements:
             project = req.project_name
             if project in self._projects:
@@ -244,6 +245,10 @@ class Basket(object):
             except: continue
 
             self._projects.add(project)
+
+        for project_dists in self.distributions.itervalues():
+            for dist in project_dists:
+                environment.add(dist)
 
     def make_local(self, dist):
         if os.path.isfile(dist.location):
@@ -296,7 +301,7 @@ class PyPIBasket(Basket):
             if not sys.version.startswith(package['python_version']) \
                     or package['packagetype'] != 'bdist_egg':
                 continue
-            self.add_egg(package['filename'], **package)
+            self.add_package(package['filename'], **package)
 
 
 PYPI_BASKET = PyPIBasket(PyPIBasket.pypi_url)

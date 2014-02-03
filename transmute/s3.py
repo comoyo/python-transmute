@@ -166,7 +166,7 @@ class S3Basket(Basket):
 
     def fetch(self, dist, **metadata):
         md5sum, data = self.s3_bucket.get_object(metadata['filename'])
-        _download(data, dist.location, md5sum[1:-1])
+        _download(data, dist.location, md5sum)
 
 
 register_basket_factory('s3', S3Basket)

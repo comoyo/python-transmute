@@ -105,14 +105,14 @@ class _S3BucketFolder:
 
         message = 'GET\n\n\n' + date + '\n'
         if self.security_token:
-            headers['x-amz-security-token'] = self.token
-            message += 'x-amz-security-token:' + self.token + '\n'
+            headers['x-amz-security-token'] = self.security_token
+            message += 'x-amz-security-token:' + self.security_token + '\n'
         message += '/' + self.bucket + path
 
-        h = hmac.new(self.secret, message, hashlib.sha1)
+        h = hmac.new(self.secret_key, message, hashlib.sha1)
         signature = base64.b64encode(h.digest())
 
-        headers['Authorization'] = 'AWS %s:%s' % (self.key, signature)
+        headers['Authorization'] = 'AWS %s:%s' % (self.access_key, signature)
 
     def get_bucket_location(self):
         return self._xml_request('/?location').getroot().text

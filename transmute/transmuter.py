@@ -51,11 +51,11 @@ class Transmuter(object):
     def hard_transmute(self):
         self.executable = sys.executable
         self.arguments = [ self.executable ] + sys.argv
-        self.environment = os.environ
+        self.environment = os.environ.copy()
 
         # Reset PYTHONPATH
         self._reset_path()
-        os.environ['PYTHONPATH'] = os.pathsep.join(sys.path)
+        self.environment['PYTHONPATH'] = os.pathsep.join(sys.path)
 
         os.execve(self.executable, self.arguments, self.environment)
         assert False

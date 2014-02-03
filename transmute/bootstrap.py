@@ -218,7 +218,7 @@ class Basket(object):
         return filename[-4] == '.' \
                 and filename[-3:].lower() == 'egg'
 
-    def add_package(self, filename, **metadata):
+    def add_package(self, filename, metadata=None):
         if not self._is_egg(filename):
             return
 
@@ -255,7 +255,7 @@ class Basket(object):
             return
 
         # Called from within catch-all in top-level require()
-        self.fetch(dist, **dist._transmute_metadata)
+        self.fetch(dist, dist._transmute_metadata)
 
     # Hooks for implementing custom baskets.
     #
@@ -273,7 +273,7 @@ class Basket(object):
         """Called before fulfilling requirements, once per project_name."""
         pass
 
-    def fetch(self, dist, **metadata):
+    def fetch(self, dist, metadata):
         """Called from make_local if local copy does not exist."""
         raise RuntimeError('Unable to fetch: %s' % dist)
 
@@ -283,7 +283,7 @@ class PyPIBasket(Basket):
 
     pypi_url = 'https://pypi.python.org/pypi'
 
-    def fetch(self, dist, **metadata):
+    def fetch(self, dist, metadata):
         import urllib2
 
         _download(urllib2.urlopen(metadata['url']),
@@ -301,7 +301,7 @@ class PyPIBasket(Basket):
             if not sys.version.startswith(package['python_version']) \
                     or package['packagetype'] != 'bdist_egg':
                 continue
-            self.add_package(package['filename'], **package)
+            self.add_package(package['filename'], package)
 
 
 PYPI_BASKET = PyPIBasket(PyPIBasket.pypi_url)

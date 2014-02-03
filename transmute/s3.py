@@ -164,7 +164,7 @@ class S3Basket(Basket):
         for filename in self.s3_bucket.list_objects():
             self.add_package(filename, filename=filename)
 
-    def fetch(self, dist, **metadata):
+    def fetch(self, dist, metadata):
         md5sum, data = self.s3_bucket.get_object(metadata['filename'])
         _download(data, dist.location, md5sum)
 

@@ -18,10 +18,12 @@ except ImportError: __version__ = 'unknown'
 import transmute.basket
 from transmute.bootstrap import PYPI_BASKET
 from transmute.resolver import Resolver
+from transmute.s3 import S3Basket
 from transmute.transmuter import Transmuter
 
 PYPI_SOURCE = PYPI_BASKET.url
 transmute.basket.register_basket(PYPI_BASKET)
+transmute.basket.register_basket_factory('s3', S3Basket)
 
 _resolver = Resolver()
 add_source = _resolver.add_source

@@ -22,7 +22,7 @@ import urllib
 import urllib2
 import xml.etree.ElementTree
 
-from transmute.basket import Basket, register_basket_factory
+from transmute.basket import Basket
 from transmute.bootstrap import _download
 
 
@@ -167,6 +167,3 @@ class S3Basket(Basket):
     def fetch(self, dist, filename):
         md5sum, data = self.s3_bucket.get_object(filename)
         _download(data, dist.location, md5sum)
-
-
-register_basket_factory('s3', S3Basket)

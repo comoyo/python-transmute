@@ -66,4 +66,5 @@ class Transmuter(object):
         # TODO: Recover from a bad update
         if self.get_conflicts():
             self.hard_transmute()
-        self.soft_transmute()
+        else:
+            self.soft_transmute()

@@ -191,18 +191,29 @@ class Basket(object):
         self._projects = set()
         self.distributions = {}
 
+    def _initialize(self):
+        if hasattr(self, '_initialized'):
+            return
+
+        self._initialized = True
+
         # Add cached packages first...
         try:
             for filename in os.listdir(self.path):
                 self.add_package(filename)
-        except:
-            # Ignore missing directory unless it's needed to cache remote
-            # packages. A remote basket is unusable without the local cache.
-            if url:
-                raise
+        except: pass
 
         # ... then let derived classes fill in remote packages
         try: self.initialize()
+        except: pass
+
+    def _initialize_project(self, project):
+        if project in self._projects:
+            return
+
+        self._projects.add(project)
+
+        try: self.initialize_project(project)
         except: pass
 
     def _prepare_cache(self, url):
@@ -236,15 +247,11 @@ class Basket(object):
         project_dists.append(dist)
 
     def fill_environment(self, environment, requirements=None):
+        self._initialize()
+
         for req in requirements:
             project = req.project_name
-            if project in self._projects:
-                continue
-
-            try: self.initialize_project(project)
-            except: continue
-
-            self._projects.add(project)
+            self._initialize_project(project)
 
         for project_dists in self.distributions.itervalues():
             for dist in project_dists:

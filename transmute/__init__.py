@@ -20,8 +20,8 @@ from transmute.bootstrap import PYPI_BASKET
 from transmute.resolver import Resolver
 from transmute.transmuter import Transmuter
 
-PYPI_SOURCE = PYPI_BASKET
-transmute.basket.register_basket(PYPI_BASKET.pypi_url, PYPI_BASKET)
+PYPI_SOURCE = PYPI_BASKET.url
+transmute.basket.register_basket(PYPI_BASKET)
 
 _resolver = Resolver()
 add_source = _resolver.add_source

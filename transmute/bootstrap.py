@@ -293,7 +293,7 @@ class PyPIBasket(Basket):
         import json
         import urllib2
 
-        url = '%s/%s/json' % (self.pypi_url, project_name)
+        url = '%s/%s/json' % (self.url, project_name)
         req = urllib2.urlopen(url)
         metadata = json.load(req)
 

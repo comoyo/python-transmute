@@ -23,8 +23,8 @@ def register_basket_factory(scheme, factory):
     assert _SCHEME_REGEX.match(scheme)
     _basket_factory[scheme] = factory
 
-def register_basket(url, basket):
-    _basket[url] = basket
+def register_basket(basket):
+    _basket[basket.url] = basket
 
 def _get_basket(url):
     scheme, colon, _ = url.partition(':')

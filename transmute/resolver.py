@@ -46,7 +46,7 @@ class Resolver:
         return [ cls._get_basket(s) for s in sources ]
 
     def add_source(self, *sources):
-        self.extend(self._get_baskets(sources))
+        self.baskets.extend(self._get_baskets(sources))
 
     def require(self, requirements, sources=None):
         baskets = self.baskets

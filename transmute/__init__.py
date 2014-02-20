@@ -28,10 +28,9 @@ transmute.basket.register_basket_factory('s3', S3Basket)
 _resolver = Resolver()
 add_source = _resolver.add_source
 require = _resolver.require
-reset = _resolver.reset
 
 def update(resolver=None):
     if resolver is None:
         resolver = globals()['_resolver']
-    tm = Transmuter(resolver.working_set)
+    tm = Transmuter(resolver.entries)
     tm.transmute()

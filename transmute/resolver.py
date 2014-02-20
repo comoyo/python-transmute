@@ -12,9 +12,10 @@
 #   License for the specific language governing permissions and limitations
 #   under the License.
 
-import pkg_resources
+import os.path
 import transmute.basket
 import transmute.bootstrap
+import sys
 
 class Resolver:
     """Find and manage lists of updated packages."""
@@ -25,15 +26,12 @@ class Resolver:
         requirements: string or list of strings listing package requirements.
         """
         self.baskets = []
-        self.reset()
+        self.entries = [ entry for entry in sys.path if os.path.isfile(entry) ]
 
         if sources:
             self.add_source(*sources)
         if requirements:
             self.require(requirements)
-
-    def reset(self):
-        self.working_set = pkg_resources.WorkingSet([])
 
     @classmethod
     def _get_basket(cls, source):
@@ -54,4 +52,4 @@ class Resolver:
             # Make a copy
             baskets = baskets + self._get_baskets(*sources)
 
-        transmute.bootstrap.require(self.working_set, baskets, *requirements)
+        transmute.bootstrap.require(baskets, requirements, self.entries)

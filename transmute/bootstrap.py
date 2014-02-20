@@ -132,20 +132,7 @@ def _download(source, filename, md5sum):
 
         os.rename(dst.name, filename)
 
-def reset_system_path(working_set):
-    """Prepend entries in working_set to sys.path."""
-
-    for entry in sys.path:
-        if entry not in working_set.entries:
-            working_set.add_entry(entry)
-
-    sys.path[:] = working_set.entries
-
-    if 'pkg_resources' in sys.modules:
-    # pkg_resource's global working_set may be outdated
-        reload(sys.modules['pkg_resources'])
-
-def require(working_set, baskets, *requirements):
+def require(baskets, requirements, entries):
     """Satisfy requirements from given baskets."""
 
     import pkg_resources
@@ -156,11 +143,15 @@ def require(working_set, baskets, *requirements):
     environment = pkg_resources.Environment()
     for basket in baskets:
         basket.fill_environment(environment, requirements)
+    working_set = pkg_resources.WorkingSet(entries)
 
     # Download needed distributions
     while True:
         needed = working_set.resolve(requirements, env=environment)
+        missing = []
         for dist in needed:
+            if dist.location in working_set.entries:
+                continue
             if hasattr(dist, '_transmute_basket'):
                 try: dist._transmute_basket.make_local(dist)
                 except: # Drop dist, start over
@@ -168,11 +159,11 @@ def require(working_set, baskets, *requirements):
                     break
                 dist._provider = pkg_resources.EggMetadata(
                         zipimport.zipimporter(dist.location))
+            missing.append(dist)
         else:
             break
 
-    for dist in needed:
-        working_set.add(dist)
+    entries[0:0] = [ dist.location for dist in missing ]
 
 
 class Basket(object):
@@ -323,18 +314,17 @@ def bootstrap():
     Latest packages are downloaded from PyPI, if available, and added to
     sys.path.
     """
+    import pkg_resources
+
     bootstrap_starting()
 
-    import pkg_resources
-    working_set = pkg_resources.WorkingSet([])
-
     try:
-        require(working_set, [ PYPI_BASKET ], *requirements)
+        require([ PYPI_BASKET ], requirements, sys.path)
     except:
         raise
         bootstrap_failed()
     else:
-        reset_system_path(working_set)
+        reload(pkg_resources)
         bootstrap_succeeded()
 
 def _clean_namespace():
@@ -362,8 +352,7 @@ def _clean_namespace():
     del _copy
     del _download
 
-    global reset_system_path, require, Basket, PyPIBasket, PYPI_BASKET
-    del reset_system_path
+    global require, Basket, PyPIBasket, PYPI_BASKET
     del require
     del Basket
     del PyPIBasket

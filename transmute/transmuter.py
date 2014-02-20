@@ -13,14 +13,15 @@
 #   under the License.
 
 import os
+import pkg_resources
 import sys
 import transmute.bootstrap
 
 class Transmuter(object):
     """Manage updates to Python's module search path."""
 
-    def __init__(self, working_set):
-        self.working_set = working_set
+    def __init__(self, entries):
+        self.working_set = pkg_resources.WorkingSet(entries)
 
     @classmethod
     def _get_dist_conflicts(self, dist):
@@ -41,12 +42,14 @@ class Transmuter(object):
         return conflicts
 
     def _reset_path(self):
-        transmute.bootstrap.reset_system_path(self.working_set)
+        sys.path[0:0] = self.working_set.entries
 
     def soft_transmute(self):
         for dist in self.working_set:
             dist.activate()
+
         self._reset_path()
+        reload(pkg_resources)
 
     def hard_transmute(self):
         self.executable = sys.executable

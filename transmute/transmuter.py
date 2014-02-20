@@ -23,23 +23,13 @@ class Transmuter(object):
     def __init__(self, entries):
         self.working_set = pkg_resources.WorkingSet(entries)
 
-    @classmethod
-    def _get_dist_conflicts(self, dist):
-        conflicts = []
-        for module in dist._get_metadata('top_level.txt'):
-            if module == 'pkg_resources':
-                continue
-            if module in sys.modules:
-                conflicts.append(module)
-        return conflicts
+    @staticmethod
+    def _dist_conflicts(dist):
+        return any(module in sys.modules
+                for module in dist._get_metadata('top_level.txt'))
 
-    def get_conflicts(self):
-        conflicts = {}
-        for dist in self.working_set:
-            dist_conflicts = self._get_dist_conflicts(dist)
-            if dist_conflicts:
-                conflicts[dist.project_name] = dist_conflicts
-        return conflicts
+    def _has_conflicts(self):
+        return any(self._dist_conflicts(dist) for dist in self.working_set)
 
     def _reset_path(self):
         sys.path[0:0] = self.working_set.entries
@@ -67,7 +57,7 @@ class Transmuter(object):
         """Inject packages in working set."""
 
         # TODO: Recover from a bad update
-        if self.get_conflicts():
+        if self._has_conflicts():
             self.hard_transmute()
         else:
             self.soft_transmute()

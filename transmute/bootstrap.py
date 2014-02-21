@@ -321,7 +321,6 @@ def bootstrap():
     try:
         require([ PYPI_BASKET ], requirements, sys.path)
     except:
-        raise
         bootstrap_failed()
     else:
         reload(pkg_resources)

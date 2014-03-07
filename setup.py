@@ -5,15 +5,23 @@ from setuptools.command.egg_info import egg_info
 
 import datetime
 import os.path
+import logging
 import subprocess
 
-
-try: execfile(VERSION_FILE)
-except: __version__ = 'unknown'
 
 README_md = 'README.md'
 README_rst = 'README.rst'
 VERSION_FILE = 'transmute/_version.py'
+
+
+# logging.basicConfig(level=logging.DEBUG)
+
+try:
+    execfile(VERSION_FILE)
+except:
+    logging.debug('Failed to read version from %s', VERSION_FILE,
+            exc_info=True)
+    __version__ = 'unknown'
 
 
 def read_file(filename):
@@ -21,7 +29,7 @@ def read_file(filename):
         with open(filename) as f:
             return f.read()
     except:
-        pass
+        logging.debug('Failed to read %s', filename, exc_info=True)
 
 def write_file(filename, content):
     with open(filename, 'w') as f:
@@ -39,7 +47,7 @@ class ResetVersion(Command):
                     [ 'git', 'describe', '--always', '--dirty=-patched' ], cwd=wd)
             self.distribution.metadata.version = revision.rstrip()
         except:
-            pass
+            logging.debug('Failed to query git version', exc_info=True)
 
     def finalize_options(self):
         pass
@@ -74,7 +82,8 @@ class EggInfo(egg_info):
             rst = pypandoc.convert(md, 'rst', format='md')
             write_file(README_rst, rst)
         except:
-            pass
+            logging.debug('Failed to generate %s from %s', README_rst,
+                    README_md, exc_info=True)
 
         self.distribution.metadata.long_description \
                 = rst or read_file(README_rst) or md

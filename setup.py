@@ -35,6 +35,24 @@ def write_file(filename, content):
     with open(filename, 'w') as f:
         return f.write(content)
 
+def execute_command(args, **kwargs):
+    # For compatibility with Python 2.6, which doesn't provide
+    # subprocess.check_output
+
+    process = subprocess.Popen(args, stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT, **kwargs)
+
+    output, _ = process.communicate()
+    exitcode = process.poll()
+
+    if exitcode:
+        msg = 'Command %s returned non-zero exit code, %i' % (args, exitcode)
+        if output:
+            msg += '\nCommand output:\n' + output
+        raise Exception(msg)
+
+    return output
+
 class ResetVersion(Command):
 
     description = "reset package version with version number from git"
@@ -43,8 +61,8 @@ class ResetVersion(Command):
     def initialize_options(self):
         try:
             wd = os.path.dirname(__file__) or None
-            revision = subprocess.check_output(
-                    [ 'git', 'describe', '--always', '--dirty=-patched' ], cwd=wd)
+            revision = execute_command(
+                    'git describe --always --dirty=-patched'.split(), cwd=wd)
             self.distribution.metadata.version = revision.rstrip()
         except:
             logging.debug('Failed to query git version', exc_info=True)

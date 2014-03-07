@@ -63,9 +63,16 @@ class ResetVersion(Command):
             wd = os.path.dirname(__file__) or None
             revision = execute_command(
                     'git describe --always --dirty=-patched'.split(), cwd=wd)
-            self.distribution.metadata.version = revision.rstrip()
         except:
             logging.debug('Failed to query git version', exc_info=True)
+            return
+
+        # Ensure version is considered final by pip
+        revision = revision.rstrip()
+        major, sep, rest = revision.partition('-')
+        if major.isdigit():
+            major += '.0'
+        self.distribution.metadata.version = major + sep + rest
 
     def finalize_options(self):
         pass
